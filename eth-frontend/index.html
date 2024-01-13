@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Decentralized Art Gallery</title>
+    <!-- Include Bootstrap CSS -->
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="js/app.js"></script>
+    <style>
+        /* Add your custom styles here */
+        .gallery img {
+            max-width: 100%;
+            height: auto;
+            margin-bottom: 20px;
+        }
+    </style>
+    <script>
+        async function connect() {
+            try {
+                if (typeof window.ethereum !== "undefined") {
+                    console.log("Connected");
+                    const accounts = await ethereum.request({ method: "eth_accounts" });
+                    console.log(accounts);
+                    alert("Connected to MetaMask! Account: " + accounts[0]);
+                } else {
+                    console.log("No MetaMask");
+                    alert("MetaMask not detected. Please install MetaMask to use this DApp.");
+                }
+            } catch (error) {
+                console.error("Error connecting to MetaMask:", error);
+                alert("Error connecting to MetaMask. Check the console for details.");
+            }
+        }
+
+        async function mintArtwork() {
+            try {
+                const userAddress = await getCurrentUserAddress();
+                const ipfsHash = prompt("Enter IPFS hash of the Artbreeder artwork:");
+
+                if (ipfsHash !== null && ipfsHash.trim() !== "") {
+                    const provider = new ethers.providers.Web3Provider(window.ethereum);
+                    const signer = provider.getSigner();
+                    const ArtGallery = await ethers.getContractFactory("ArtGallery");
+                    const artGallery = new ethers.Contract("0x5FbDB2315678afecb367f032d93F642f64180aa3", ArtGallery.interface, signer);
+
+                    await artGallery.mint(userAddress, ipfsHash);
+
+                    console.log("NFT minted successfully!");
+                    // Refresh NFT gallery after minting
+                    displayNFTs();
+                } else {
+                    console.log("User did not provide a valid IPFS hash for the Artbreeder artwork.");
+                }
+            } catch (error) {
+                console.error("Error minting NFT:", error);
+                alert("Error minting NFT. Check the console for details.");
+            }
+        }
+
+        async function getCurrentUserAddress() {
+            const provider = new ethers.providers.Web3Provider(window.ethereum);
+            const signer = provider.getSigner();
+            return await signer.getAddress();
+        }
+
+        async function displayNFTs() {
+            // Add code to display NFTs in the gallery
+            // You can use the gallery container (div with id="nftGallery") to append NFTs dynamically
+            // Example: const galleryContainer = document.getElementById("nftGallery");
+            // Update the galleryContainer with the newly minted NFTs
+        }
+    </script>
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="text-center">Decentralized Art Gallery</h1>
+        <div class="row mt-4">
+            <div class="col-md-8 offset-md-2">
+                <!-- Display NFTs here -->
+                <div class="gallery" id="nftGallery">
+                    <!-- NFTs will be dynamically added here -->
+                </div>
+                <!-- Mint Form -->
+                <div class="mint-form">
+                    <h2 class="text-center">Create and Sell NFT</h2>
+                    <button class="btn btn-primary mt-2" onclick="mintArtwork()">Mint Artwork</button>
+                </div>
+                <br />
+                <br />
+                <button class="btn btn-info" onclick="connect()">Connect</button>
+            </div>
+        </div>
+    </div>
+    <!-- Include Bootstrap JS at the end of the body -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
