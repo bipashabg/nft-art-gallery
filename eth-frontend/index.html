@@ -16,12 +16,20 @@
             margin-bottom: 20px;
         }
     </style>
+    <script src="https://cdn.ethers.io/lib/ethers-5.0.umd.min.js"></script>
+    <!--<script src="https://cdn.jsdelivr.net/npm/ipfs-http-client@68.1.1/dist/index.min.js">-->
+        <script type="module">
+            // Import ethers using ES6 module syntax
+            import { ethers } from './ethers.js';
+        </script>
+    <script src="https://unpkg.com/kubo-rpc-client/dist/index.min.js"></script>
+
     <script>
         async function connect() {
             try {
                 if (typeof window.ethereum !== "undefined") {
                     console.log("Connected");
-                    const accounts = await ethereum.request({ method: "eth_accounts" });
+                    const accounts = await ethereum.request({ method: "eth_requestAccounts" });
                     console.log(accounts);
                     alert("Connected to MetaMask! Account: " + accounts[0]);
                 } else {
@@ -37,9 +45,12 @@
         async function mintArtwork() {
             try {
                 const userAddress = await getCurrentUserAddress();
-                const ipfsHash = prompt("Enter IPFS hash of the Artbreeder artwork:");
 
-                if (ipfsHash !== null && ipfsHash.trim() !== "") {
+                // Get IPFS hash from the input field
+                const ipfsHashInput = document.getElementById("ipfsHashInput");
+                const ipfsHash = ipfsHashInput.value.trim();
+
+                if (ipfsHash !== "") {
                     const provider = new ethers.providers.Web3Provider(window.ethereum);
                     const signer = provider.getSigner();
                     const ArtGallery = await ethers.getContractFactory("ArtGallery");
@@ -59,6 +70,54 @@
             }
         }
 
+        async function handleFileUpload() {
+            try {
+                const fileInput = document.getElementById("fileInput");
+                const file = fileInput.files[0];
+        
+                if (file) {
+                    const ipfsHash = await uploadToIPFS(file);
+                    alert("File uploaded to IPFS. IPFS Hash: " + ipfsHash);
+        
+                    // Set the IPFS hash in the input field
+                    const ipfsHashInput = document.getElementById("ipfsHashInput");
+                    ipfsHashInput.value = ipfsHash;
+        
+                    // Display the image using IPFS URL
+                    const galleryContainer = document.getElementById("nftGallery");
+                    const imgSrc = `https://ipfs.io/ipfs/${ipfsHash}`;
+                    const nftElement = document.createElement("div");
+                    nftElement.classList.add("nft");
+                    nftElement.innerHTML = `
+                        <p>Owner: ${getCurrentUserAddress()}</p>
+                        <img src="${imgSrc}" alt="NFT">
+                    `;
+                    galleryContainer.appendChild(nftElement);
+                } else {
+                    console.log("No file selected.");
+                }
+            } catch (error) {
+                console.error("Error uploading file to IPFS:", error);
+                alert("Error uploading file to IPFS. Check the console for details.");
+            }
+        }
+        
+        
+
+        async function uploadToIPFS(file) {
+            // Create an IPFS client with the connection details
+            const ipfs = ipfsClient({ host: 'ipfs.infura.io', port: 5001, protocol: 'https' });
+        
+            // Convert the file to a buffer
+            const fileBuffer = Buffer.from(await file.arrayBuffer());
+        
+            // Use ipfs.add to upload the file to IPFS
+            const result = await ipfs.add(fileBuffer);
+        
+            // Return the IPFS hash of the uploaded file
+            return result.cid.toString();
+        }
+
         async function getCurrentUserAddress() {
             const provider = new ethers.providers.Web3Provider(window.ethereum);
             const signer = provider.getSigner();
@@ -75,7 +134,7 @@
 </head>
 <body>
     <div class="container mt-5">
-        <h1 class="text-center">Decentralized Art Gallery</h1>
+        <h1 class="text-center">My Art Gallery</h1>
         <div class="row mt-4">
             <div class="col-md-8 offset-md-2">
                 <!-- Display NFTs here -->
@@ -85,11 +144,29 @@
                 <!-- Mint Form -->
                 <div class="mint-form">
                     <h2 class="text-center">Create and Sell NFT</h2>
-                    <button class="btn btn-primary mt-2" onclick="mintArtwork()">Mint Artwork</button>
-                </div>
+                    <br />
+                    <br />
+                    <!-- Input field for uploading PNG file -->
+                    <div class="mb-3">
+                        <label for="fileInput" class="form-label">Upload PNG File:</label>
+                        <input type="file" class="form-control" id="fileInput" accept=".png">
+                        <button class="btn btn-primary mt-2" onclick="handleFileUpload()">Upload and Convert to IPFS</button>
+                    </div>
+                    <h2>OR</h2>
+                    <br />
+                    <br />
+                    <!-- Input field for IPFS hash -->
+                    <div class="mb-3">
+                        <label for="ipfsHashInput" class="form-label">Enter IPFS Hash:</label>
+                        <input type="text" class="form-control" id="ipfsHashInput" placeholder="e.g., QmXwyL9sjPhooeiUM8W5hTwKgxmFqC3YvnGLuBMuGsJrRy">
+                    </div>
+                    <br />
+                    <br />
+                    <button class="btn btn-primary mt-2" onclick="mintArtwork()">Create NFT</button>
                 <br />
                 <br />
                 <button class="btn btn-info" onclick="connect()">Connect</button>
+            </div>
             </div>
         </div>
     </div>
@@ -97,3 +174,4 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
+

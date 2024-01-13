@@ -1,5 +1,7 @@
 {
   "dependencies": {
-    "ethers": "^6.9.2"
+    "@alch/alchemy-web3": "^1.4.7",
+    "dotenv": "^16.3.1",
+    "ethers": "^6.10.0"
   }
 }
