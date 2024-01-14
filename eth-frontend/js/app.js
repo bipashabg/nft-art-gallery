@@ -1,5 +1,7 @@
 // frontend/js/app.js
-const { ethers } = require("../ethers");
+//const { ethers } = require("../ethers");
+import { ethers } from "./ethers-5.6.esm.min.js"
+
 const ipfsClient = require('ipfs-http-client');
 const fs = require('fs');
 const fetch = require('node-fetch');
